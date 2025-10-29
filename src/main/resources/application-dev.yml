@@ -1,0 +1,20 @@
+server:
+  port: 9000
+
+spring:
+  config:
+    import: optional:file:.env.dev[.properties]
+  application:
+    name: auth-service
+  datasource:
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL}
+  liquibase:
+    change-log: classpath:changelog/db.changelog-master.xml
+    default-schema: ${DEFAULT_SCHEMA}
+    liquibase-schema: ${LIQUIBASE_SCHEMA}
+#  sql:
+#    init:
+#      mode: always
+#      schema-locations: schema.sql
