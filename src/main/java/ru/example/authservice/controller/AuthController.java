@@ -1,5 +1,6 @@
 package ru.example.authservice.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,16 +13,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.example.authservice.dto.AuthResponse;
 import ru.example.authservice.dto.LoginRequest;
+import ru.example.authservice.dto.request.UserRequestDTO;
+import ru.example.authservice.entity.User;
+import ru.example.authservice.service.UserService;
 
 import javax.naming.AuthenticationException;
 import java.util.Map;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/auth")
 public class AuthController {
 
-          @Autowired
-          private AuthenticationManager authenticationManager;
+
+          private final AuthenticationManager authenticationManager;
+          private final UserService userService;
 
           @PostMapping("/login")
           public ResponseEntity<?> login(@RequestBody LoginRequest request) {
@@ -47,6 +53,12 @@ public class AuthController {
                     );
 
                     return ResponseEntity.ok(response);
+
+          }
+
+          @PostMapping("/register")
+          public User register(@RequestBody UserRequestDTO request) {
+                    return userService.signUp(request);
 
           }
 }

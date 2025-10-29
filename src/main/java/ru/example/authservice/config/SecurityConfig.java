@@ -58,7 +58,7 @@ public class SecurityConfig {
           @Order(1)
           public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
                     http
-                              .securityMatcher("/api/auth/**")  // Только API endpoints
+                              .securityMatcher("/api/**")  // Только API endpoints
                               .authorizeHttpRequests(authz -> authz
                                         .anyRequest().permitAll()  // Разрешаем все API запросы
                               )
