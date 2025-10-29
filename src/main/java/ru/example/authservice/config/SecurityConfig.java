@@ -24,6 +24,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -191,5 +193,8 @@ public class SecurityConfig {
           public PasswordEncoder passwordEncoder() {
                     return new BCryptPasswordEncoder();
           }
-
+          @Bean
+          public JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
+                    return new NimbusJwtEncoder(jwkSource);
+          }
 }
