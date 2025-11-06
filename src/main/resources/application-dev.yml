@@ -1,6 +1,5 @@
 server:
-  port: 9000
-
+  port: ${PORT}
 spring:
   config:
     import: optional:file:.env.dev[.properties]
