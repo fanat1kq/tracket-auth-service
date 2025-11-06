@@ -14,6 +14,15 @@ spring:
     change-log: classpath:changelog/db.changelog-master.xml
     default-schema: ${DEFAULT_SCHEMA}
     liquibase-schema: ${LIQUIBASE_SCHEMA}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+kafka:
+  topics:
+    email-sending: ${KAFKA_TOPIC_EMAIL_SENDING:email-sending-topic}
+    user-info: ${KAFKA_TOPIC_USER_INFO:user-info-topic}
+    task-notification: ${KAFKA_TOPIC_TASK_NOTIFICATION:task-notification-topic}
 #  sql:
 #    init:
 #      mode: always

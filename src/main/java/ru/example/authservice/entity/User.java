@@ -12,10 +12,12 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter
 @Setter
 @Entity
-@Table(name = "users", indexes = @Index(name = "users_name", columnList = "username", unique = true))
+@Table(name = "users", indexes = @Index(name = "users_name", columnList = "username", unique = true), schema = "authorization_service")
 @RequiredArgsConstructor
 public class User {
 
@@ -29,4 +31,7 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+
+    @Column
+    private String email;
 }
