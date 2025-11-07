@@ -1,3 +1,4 @@
+
 CREATE TABLE IF NOT EXISTS authorization_service.oauth2_registered_client (
                                                                               id varchar(100) NOT NULL,
                                                                               client_id varchar(100) NOT NULL,

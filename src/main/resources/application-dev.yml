@@ -1,6 +1,9 @@
 server:
   port: ${PORT}
 spring:
+  sql:
+    init:
+      mode: always
   config:
     import: optional:file:.env.dev[.properties]
   application:
