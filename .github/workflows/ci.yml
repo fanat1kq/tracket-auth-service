@@ -9,6 +9,7 @@ env:
 
 jobs:
   build-and-push:
+    environment: task-tracker
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')
 
