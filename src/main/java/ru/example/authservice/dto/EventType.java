@@ -7,16 +7,16 @@ import java.util.Arrays;
 
 @Getter
 @RequiredArgsConstructor
-public enum RecipientType {
+public enum EventType {
+          USER_REGISTERED("USER_REGISTERED");
 
-          EMAIL("EMAIL");
+          private final String eventTypeName;
 
-          private final String recipientName;
-
-          public static RecipientType fromString(String type) {
+          public static EventType fromString(String type) {
                     return Arrays.stream(values())
                               .filter(typeFromEnum -> typeFromEnum.name().equals(type))
                               .findFirst()
-                              .orElseThrow(() -> new IllegalArgumentException("Unknown RecipientType: " + type));
+                              .orElseThrow(() -> new IllegalArgumentException(
+                                        "Unknown event type: " + type));
           }
 }

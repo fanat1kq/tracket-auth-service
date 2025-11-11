@@ -1,20 +1,24 @@
 package ru.example.authservice.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.data.util.Streamable;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.example.authservice.dto.Notification;
-import ru.example.authservice.dto.NotificationType;
-import ru.example.authservice.dto.RecipientType;
+import ru.example.authservice.dto.AuthResponse;
+import ru.example.authservice.dto.EventType;
+import ru.example.authservice.dto.LoginRequest;
+import ru.example.authservice.dto.UserDto;
+import ru.example.authservice.dto.UserRegisteredPayload;
 import ru.example.authservice.dto.request.UserRequestDTO;
 import ru.example.authservice.entity.User;
 import ru.example.authservice.mapper.UserMapper;
-import ru.example.authservice.publisher.NotificationPublisher;
 import ru.example.authservice.repository.UserRepository;
 
-import java.util.Collections;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,47 +28,45 @@ public class UserService {
 
           private final PasswordEncoder passwordEncoder;
 
-          private final UserDetailsService userDetailsService;
+          private final OutboxService outboxService;
 
           private final UserMapper userMapper;
 
-          private final NotificationPublisher notificationPublisher;
+          private final JwtTokenService jwtTokenService;
+
+          private final AuthenticationManager authenticationManager;
+
+          public AuthResponse login(LoginRequest request) {
+                    Authentication authentication = authenticationManager.authenticate(
+                              new UsernamePasswordAuthenticationToken(
+                                        request.username(),
+                                        request.password()
+                              )
+                    );
+
+                    String jwtToken = jwtTokenService.generateJwtToken(authentication);
+
+                    User user = userRepository.findUserByUsername(request.username())
+                              .orElseThrow(() -> new RuntimeException("User not found"));
+
+                    return userMapper.toAuthResponse(jwtToken, user);
+
+          }
 
           @Transactional
           public User signUp(UserRequestDTO userRequestDTO) {
                     User user = userMapper.toEntityWithPassword(userRequestDTO, passwordEncoder);
                     User savedUser = userRepository.save(user);
 
-                    Notification message = Notification
-                              .builder()
-                              .templateType(NotificationType.WELCOME.getTemplateName().toUpperCase())
-                              .recipientType(RecipientType.EMAIL.getRecipientName())
-                              .to(userRequestDTO.email())
-                              .data(Collections.emptyMap())
-                              .build();
-
-                    notificationPublisher.send(message);
-                    //TODO:outbox
+                    UserRegisteredPayload payload = userMapper.toUserRegisteredPayload(savedUser);
+                    outboxService.createEvent(EventType.USER_REGISTERED.getEventTypeName(), payload);
 
                     return savedUser;
           }
 
-//    @Transactional(readOnly = true)
-//    public UserResponseDTO signIn(UserRequestDTO request,
-//                                  HttpServletRequest httpServletRequest,
-//                                  HttpServletResponse httpServletResponse) {
-//
-//        CustomUserDetails userDetails = (CustomUserDetails)
-//                userDetailsService.loadUserByUsername(request.username());
-//
-//        String token = jwtTokenUtils.generateToken(userDetails);
-//
-//        return userMapper.toAuthDto(userDetails, token);
-//    }
-//
-//    public void authenticateUser(User user,
-//                                 HttpServletRequest httpRequest,
-//                                 HttpServletResponse httpResponse) {
-//        CustomUserDetails userDetails = userMapper.toCustomUserDetails(user);
-//    }
+          public List<UserDto> getAllUsers() {
+                    return Streamable.of(userRepository.findAll()).stream()
+                              .map(userMapper::toUserDto)
+                              .toList();
+          }
 }

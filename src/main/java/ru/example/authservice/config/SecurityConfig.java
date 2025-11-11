@@ -15,18 +15,13 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
-import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -34,7 +29,6 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import ru.example.authservice.security.CustomUserDetailsService;
 
@@ -62,6 +56,7 @@ public class SecurityConfig {
                     http
                               .securityMatcher("/api/**")  // Только API endpoints
                               .authorizeHttpRequests(authz -> authz
+
                                         .anyRequest().permitAll()  // Разрешаем все API запросы
                               )
                               .csrf(csrf -> csrf.disable())
@@ -80,6 +75,9 @@ public class SecurityConfig {
 
                     http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
                               .oidc(Customizer.withDefaults());
+
+
+                    http.oauth2Client(Customizer.withDefaults());
 
                     http.formLogin(form -> form
                               .loginPage("/login")
@@ -107,7 +105,6 @@ public class SecurityConfig {
                     return http.build();
           }
 
-          // 3. Default Security (низший приоритет)
           @Bean
           @Order(3)
           public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
@@ -125,11 +122,9 @@ public class SecurityConfig {
 
           @Bean
           public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
+                    JdbcRegisteredClientRepository jdbcRepository =
+                              new JdbcRegisteredClientRepository(jdbcTemplate);
 
-                    // Создаем JDBC репозиторий
-                    JdbcRegisteredClientRepository jdbcRepository = new JdbcRegisteredClientRepository(jdbcTemplate);
-
-                    // Инициализируем клиентов при старте
                     initializeDefaultClients(jdbcRepository);
 
                     return jdbcRepository;
@@ -137,22 +132,28 @@ public class SecurityConfig {
 
           private void initializeDefaultClients(JdbcRegisteredClientRepository jdbcRepository) {
                     if (jdbcRepository.findByClientId("gateway-client") == null) {
-                              RegisteredClient gatewayClient = RegisteredClient.withId(UUID.randomUUID().toString())
-                                        .clientId("gateway-client")
-                                        .clientSecret("{noop}gateway-secret")
-                                        .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-                                        .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                                        .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                                        .redirectUri("http://localhost:8080/login/oauth2/code/auth-service")
-                                        .scope("read")
-                                        .scope("write")
-                                        .tokenSettings(TokenSettings.builder()
-                                                  .accessTokenTimeToLive(Duration.ofHours(1))
-                                                  .build())
-                                        .clientSettings(ClientSettings.builder()
-                                                  .requireAuthorizationConsent(false)
-                                                  .build())
-                                        .build();
+                              RegisteredClient gatewayClient =
+                                        RegisteredClient.withId(UUID.randomUUID().toString())
+                                                  .clientId("gateway-client")
+                                                  .clientSecret("{noop}gateway-secret")
+                                                  .clientAuthenticationMethod(
+                                                            ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                                                  .authorizationGrantType(
+                                                            AuthorizationGrantType.AUTHORIZATION_CODE)
+                                                  .authorizationGrantType(
+                                                            AuthorizationGrantType.REFRESH_TOKEN)
+                                                  .redirectUri(
+                                                            "http://localhost:8080/login/oauth2/code/auth-service")
+                                                  .scope("read")
+                                                  .scope("write")
+                                                  .tokenSettings(TokenSettings.builder()
+                                                            .accessTokenTimeToLive(
+                                                                      Duration.ofHours(1))
+                                                            .build())
+                                                  .clientSettings(ClientSettings.builder()
+                                                            .requireAuthorizationConsent(false)
+                                                            .build())
+                                                  .build();
 
                               jdbcRepository.save(gatewayClient);
                     }
@@ -180,9 +181,10 @@ public class SecurityConfig {
 
           @Bean
           public AuthenticationManager authenticationManager(
-                    CustomUserDetailsService userDetailsService,// Используем ваш CustomUserDetailsService
+                    CustomUserDetailsService userDetailsService,
                     PasswordEncoder passwordEncoder) {
-                    DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+                    DaoAuthenticationProvider authenticationProvider =
+                              new DaoAuthenticationProvider();
                     authenticationProvider.setUserDetailsService(userDetailsService);
                     authenticationProvider.setPasswordEncoder(passwordEncoder);
 
@@ -193,6 +195,7 @@ public class SecurityConfig {
           public PasswordEncoder passwordEncoder() {
                     return new BCryptPasswordEncoder();
           }
+
           @Bean
           public JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
                     return new NimbusJwtEncoder(jwkSource);

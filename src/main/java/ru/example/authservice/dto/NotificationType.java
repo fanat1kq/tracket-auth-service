@@ -20,6 +20,6 @@ public enum NotificationType {
                     return Arrays.stream(values())
                               .filter(typeFromEnum -> typeFromEnum.name().equals(type))
                               .findFirst()
-                              .orElseThrow(() -> new IllegalArgumentException("Unknown email Templatetype: " + type));
+                              .orElseThrow(() -> new IllegalArgumentException("Unknown TemplateType: " + type));
           }
 }
