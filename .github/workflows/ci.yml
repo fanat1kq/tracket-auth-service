@@ -5,7 +5,7 @@ on:
     branches: [ master, develop ]
 
 env:
-  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/auth-service
+  IMAGE_NAME: task-tracker_auth-service
 
 jobs:
   build-and-push:
