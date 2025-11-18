@@ -74,7 +74,7 @@ jobs:
             docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin <<< "${{ secrets.DOCKERHUB_TOKEN }}"
             docker stop auth-service || true
             docker rm auth-service || true
-            docker pull --platform linux/amd64 ${{ env.IMAGE_NAME }}:master
+            docker pull --platform linux/amd64 ${{ env.IMAGE_NAME }}:latest
             cd ~/app/task-tracker
             docker-compose -f docker-compose.prod.yml up -d auth-service
             docker rmi $(docker images "${{ env.IMAGE_NAME }}" --filter "before=${{ env.IMAGE_NAME }}:master" -q) || true
