@@ -5,10 +5,10 @@ import lombok.Builder;
 
 @Builder
 public record NotificationPayloadDTO(
-          String to,
-          String userId,
-          String templateType,
-          String recipientType,
-          String eventTime
+    String to,
+    String userId,
+    String templateType,
+    String recipientType,
+    String eventTime
 ) {
 }

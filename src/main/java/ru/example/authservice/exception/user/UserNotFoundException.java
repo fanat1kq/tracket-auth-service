@@ -1,7 +1,7 @@
 package ru.example.authservice.exception.user;
 
 
-import static ru.example.authservice.utils.Constants.MESSAGE_USER_NOT_FOUND;
+import static ru.example.authservice.util.Constants.MESSAGE_USER_NOT_FOUND;
 
 public class UserNotFoundException extends RuntimeException {
 

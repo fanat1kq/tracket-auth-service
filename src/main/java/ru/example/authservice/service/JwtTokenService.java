@@ -15,26 +15,26 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class JwtTokenService {
 
-          private final JwtEncoder jwtEncoder;
+    private final JwtEncoder jwtEncoder;
 
-          public String generateJwtToken(Authentication authentication) {
-                    Instant now = Instant.now();
-                    long expiry = 3600L;
+    public String generateJwtToken(Authentication authentication) {
+        Instant now = Instant.now();
+        long expiry = 3600L;
 
-                    JwtClaimsSet claims = JwtClaimsSet.builder()
-                              .issuer("auth-service")
-                              .issuedAt(now)
-                              .expiresAt(now.plusSeconds(expiry))
-                              .subject(authentication.getName())
-                              .claim("username", authentication.getName())
-                              .claim("scope", "read write")
-                              .build();
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+            .issuer("auth-service")
+            .issuedAt(now)
+            .expiresAt(now.plusSeconds(expiry))
+            .subject(authentication.getName())
+            .claim("username", authentication.getName())
+            .claim("scope", "read write")
+            .build();
 
-                    JwtEncoderParameters parameters = JwtEncoderParameters.from(
-                              JwsHeader.with(SignatureAlgorithm.RS256).build(),
-                              claims
-                    );
+        JwtEncoderParameters parameters = JwtEncoderParameters.from(
+            JwsHeader.with(SignatureAlgorithm.RS256).build(),
+            claims
+        );
 
-                    return jwtEncoder.encode(parameters).getTokenValue();
-          }
+        return jwtEncoder.encode(parameters).getTokenValue();
+    }
 }

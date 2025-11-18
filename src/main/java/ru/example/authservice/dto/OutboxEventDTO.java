@@ -4,7 +4,7 @@ import lombok.Builder;
 
 @Builder
 public record OutboxEventDTO(
-          String eventType,
-          String payload
+    String eventType,
+    String payload
 ) {
 }

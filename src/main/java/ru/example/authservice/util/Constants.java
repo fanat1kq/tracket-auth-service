@@ -1,4 +1,4 @@
-package ru.example.authservice.utils;
+package ru.example.authservice.util;
 
 public final class Constants {
 
@@ -6,5 +6,6 @@ public final class Constants {
     }
 
     public static final String MESSAGE_USER_EXIST = "User already exists: %s";
+
     public static final String MESSAGE_USER_NOT_FOUND = "User not found: %s";
 }

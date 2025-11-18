@@ -44,160 +44,160 @@ import java.util.UUID;
 @EnableWebSecurity
 public class SecurityConfig {
 
-          private static KeyPair generateRsaKey() throws NoSuchAlgorithmException {
-                    KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-                    keyPairGenerator.initialize(2048);
-                    return keyPairGenerator.generateKeyPair();
-          }
+    private static KeyPair generateRsaKey() throws NoSuchAlgorithmException {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(2048);
+        return keyPairGenerator.generateKeyPair();
+    }
 
-          @Bean
-          @Order(1)
-          public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
-                    http
-                              .securityMatcher("/api/**")  // Только API endpoints
-                              .authorizeHttpRequests(authz -> authz
+    @Bean
+    @Order(1)
+    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .securityMatcher("/api/**")  // Только API endpoints
+            .authorizeHttpRequests(authz -> authz
 
-                                        .anyRequest().permitAll()  // Разрешаем все API запросы
-                              )
-                              .csrf(csrf -> csrf.disable())
-                              .sessionManagement(session -> session
-                                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                              );
+                .anyRequest().permitAll()  // Разрешаем все API запросы
+            )
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            );
 
-                    return http.build();
-          }
+        return http.build();
+    }
 
-          @Bean
-          @Order(2)
-          public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
-                    throws Exception {
-                    OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
+    @Bean
+    @Order(2)
+    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
+        throws Exception {
+        OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
 
-                    http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-                              .oidc(Customizer.withDefaults());
-
-
-                    http.oauth2Client(Customizer.withDefaults());
-
-                    http.formLogin(form -> form
-                              .loginPage("/login")
-                              .loginProcessingUrl("/login")
-                              .successHandler((request, response, authentication) -> {
-                                        System.out.println("=== LOGIN SUCCESS ===");
-                                        String originalRequest = (String) request.getSession()
-                                                  .getAttribute("ORIGINAL_OAUTH2_REQUEST");
-                                        if (originalRequest != null) {
-                                                  response.sendRedirect(originalRequest);
-                                        } else {
-                                                  response.sendRedirect("/");
-                                        }
-                              })
-                              .failureUrl("/login?error=true")
-                              .permitAll()
-                    );
-
-                    http.exceptionHandling(handling -> handling
-                              .authenticationEntryPoint((request, response, authException) -> {
-                                        response.sendRedirect("/login");
-                              })
-                    );
-
-                    return http.build();
-          }
-
-          @Bean
-          @Order(3)
-          public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
-                    throws Exception {
-                    http
-                              .authorizeHttpRequests(authz -> authz
-                                        .requestMatchers("/", "/login", "/error", "/webjars/**",
-                                                  "/css/**", "/js/**", "/images/**").permitAll()
-                                        .anyRequest().authenticated()
-                              )
-                              .csrf(csrf -> csrf.disable());
-
-                    return http.build();
-          }
-
-          @Bean
-          public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
-                    JdbcRegisteredClientRepository jdbcRepository =
-                              new JdbcRegisteredClientRepository(jdbcTemplate);
-
-                    initializeDefaultClients(jdbcRepository);
-
-                    return jdbcRepository;
-          }
-
-          private void initializeDefaultClients(JdbcRegisteredClientRepository jdbcRepository) {
-                    if (jdbcRepository.findByClientId("gateway-client") == null) {
-                              RegisteredClient gatewayClient =
-                                        RegisteredClient.withId(UUID.randomUUID().toString())
-                                                  .clientId("gateway-client")
-                                                  .clientSecret("{noop}gateway-secret")
-                                                  .clientAuthenticationMethod(
-                                                            ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-                                                  .authorizationGrantType(
-                                                            AuthorizationGrantType.AUTHORIZATION_CODE)
-                                                  .authorizationGrantType(
-                                                            AuthorizationGrantType.REFRESH_TOKEN)
-                                                  .redirectUri(
-                                                            "http://localhost:8080/login/oauth2/code/auth-service")
-                                                  .scope("read")
-                                                  .scope("write")
-                                                  .tokenSettings(TokenSettings.builder()
-                                                            .accessTokenTimeToLive(
-                                                                      Duration.ofHours(1))
-                                                            .build())
-                                                  .clientSettings(ClientSettings.builder()
-                                                            .requireAuthorizationConsent(false)
-                                                            .build())
-                                                  .build();
-
-                              jdbcRepository.save(gatewayClient);
-                    }
-          }
+        http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+            .oidc(Customizer.withDefaults());
 
 
-          @Bean
-          public JWKSource<SecurityContext> jwkSource() throws NoSuchAlgorithmException {
-                    KeyPair keyPair = generateRsaKey();
-                    RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-                    RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-                    RSAKey rsaKey = new RSAKey.Builder(publicKey)
-                              .privateKey(privateKey)
-                              .keyID(UUID.randomUUID().toString())
-                              .build();
-                    JWKSet jwkSet = new JWKSet(rsaKey);
-                    return (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
-          }
+        http.oauth2Client(Customizer.withDefaults());
 
-          @Bean
-          public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
-                    return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
-          }
+        http.formLogin(form -> form
+            .loginPage("/login")
+            .loginProcessingUrl("/login")
+            .successHandler((request, response, authentication) -> {
+                System.out.println("=== LOGIN SUCCESS ===");
+                String originalRequest = (String) request.getSession()
+                    .getAttribute("ORIGINAL_OAUTH2_REQUEST");
+                if (originalRequest != null) {
+                    response.sendRedirect(originalRequest);
+                } else {
+                    response.sendRedirect("/");
+                }
+            })
+            .failureUrl("/login?error=true")
+            .permitAll()
+        );
+
+        http.exceptionHandling(handling -> handling
+            .authenticationEntryPoint((request, response, authException) -> {
+                response.sendRedirect("/login");
+            })
+        );
+
+        return http.build();
+    }
+
+    @Bean
+    @Order(3)
+    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
+        throws Exception {
+        http
+            .authorizeHttpRequests(authz -> authz
+                .requestMatchers("/", "/login", "/error", "/webjars/**",
+                    "/css/**", "/js/**", "/images/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .csrf(csrf -> csrf.disable());
+
+        return http.build();
+    }
+
+    @Bean
+    public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
+        JdbcRegisteredClientRepository jdbcRepository =
+            new JdbcRegisteredClientRepository(jdbcTemplate);
+
+        initializeDefaultClients(jdbcRepository);
+
+        return jdbcRepository;
+    }
+
+    private void initializeDefaultClients(JdbcRegisteredClientRepository jdbcRepository) {
+        if (jdbcRepository.findByClientId("gateway-client") == null) {
+            RegisteredClient gatewayClient =
+                RegisteredClient.withId(UUID.randomUUID().toString())
+                    .clientId("gateway-client")
+                    .clientSecret("{noop}gateway-secret")
+                    .clientAuthenticationMethod(
+                        ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                    .authorizationGrantType(
+                        AuthorizationGrantType.AUTHORIZATION_CODE)
+                    .authorizationGrantType(
+                        AuthorizationGrantType.REFRESH_TOKEN)
+                    .redirectUri(
+                        "http://localhost:8080/login/oauth2/code/auth-service")
+                    .scope("read")
+                    .scope("write")
+                    .tokenSettings(TokenSettings.builder()
+                        .accessTokenTimeToLive(
+                            Duration.ofHours(1))
+                        .build())
+                    .clientSettings(ClientSettings.builder()
+                        .requireAuthorizationConsent(false)
+                        .build())
+                    .build();
+
+            jdbcRepository.save(gatewayClient);
+        }
+    }
 
 
-          @Bean
-          public AuthenticationManager authenticationManager(
-                    CustomUserDetailsService userDetailsService,
-                    PasswordEncoder passwordEncoder) {
-                    DaoAuthenticationProvider authenticationProvider =
-                              new DaoAuthenticationProvider();
-                    authenticationProvider.setUserDetailsService(userDetailsService);
-                    authenticationProvider.setPasswordEncoder(passwordEncoder);
+    @Bean
+    public JWKSource<SecurityContext> jwkSource() throws NoSuchAlgorithmException {
+        KeyPair keyPair = generateRsaKey();
+        RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
+        RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
+        RSAKey rsaKey = new RSAKey.Builder(publicKey)
+            .privateKey(privateKey)
+            .keyID(UUID.randomUUID().toString())
+            .build();
+        JWKSet jwkSet = new JWKSet(rsaKey);
+        return (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
+    }
 
-                    return new ProviderManager(authenticationProvider);
-          }
+    @Bean
+    public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+        return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+    }
 
-          @Bean
-          public PasswordEncoder passwordEncoder() {
-                    return new BCryptPasswordEncoder();
-          }
 
-          @Bean
-          public JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
-                    return new NimbusJwtEncoder(jwkSource);
-          }
+    @Bean
+    public AuthenticationManager authenticationManager(
+        CustomUserDetailsService userDetailsService,
+        PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider authenticationProvider =
+            new DaoAuthenticationProvider();
+        authenticationProvider.setUserDetailsService(userDetailsService);
+        authenticationProvider.setPasswordEncoder(passwordEncoder);
+
+        return new ProviderManager(authenticationProvider);
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
+        return new NimbusJwtEncoder(jwkSource);
+    }
 }

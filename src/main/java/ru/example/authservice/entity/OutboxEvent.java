@@ -23,19 +23,22 @@ import java.time.LocalDateTime;
 @Table(name = "outbox_events")
 public class OutboxEvent {
 
-          @Id
-          @GeneratedValue(strategy = GenerationType.IDENTITY)
-          private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-          @Column(nullable = false)
-          private String eventType;
+    @Column(nullable = false)
+    private String eventType;
 
-          @Column(columnDefinition = "jsonb", nullable = false)
-          private String payload;
+    @Column(columnDefinition = "jsonb", nullable = false)
+    private String payload;
 
-          @Column(nullable = false)
-          private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(nullable = false)
+    private String deduplicationKey;
 
-          @Column(nullable = false)
-          private boolean processed = false;
+    @Column(nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(nullable = false)
+    private boolean processed = false;
 }

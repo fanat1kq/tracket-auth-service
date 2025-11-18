@@ -9,24 +9,26 @@ import ru.example.authservice.entity.OutboxEvent;
 import ru.example.authservice.repository.OutboxEventRepository;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class OutboxService {
 
-          private final OutboxEventRepository outboxEventRepository;
+    private final OutboxEventRepository outboxEventRepository;
 
-          private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-          @SneakyThrows
-          @Transactional
-          public void createEvent(String eventType, Object payload) {
-                    String payloadJson = objectMapper.writeValueAsString(payload);
-                    outboxEventRepository.save(OutboxEvent.builder()
-                              .eventType(eventType)
-                              .payload(payloadJson)
-                              .createdAt(LocalDateTime.now())
-                              .processed(false)
-                              .build());
-          }
+    @SneakyThrows
+    @Transactional
+    public void createEvent(String eventType, Object payload) {
+        String payloadJson = objectMapper.writeValueAsString(payload);
+        outboxEventRepository.save(OutboxEvent.builder()
+            .eventType(eventType)
+            .payload(payloadJson)
+            .deduplicationKey(String.valueOf(UUID.randomUUID()))
+            .createdAt(LocalDateTime.now())
+            .processed(false)
+            .build());
+    }
 }

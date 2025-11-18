@@ -8,9 +8,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.example.authservice.dto.AuthResponse;
-import ru.example.authservice.dto.EventType;
-import ru.example.authservice.dto.LoginRequest;
+import ru.example.authservice.dto.response.AuthResponse;
+import ru.example.authservice.dto.enumerates.EventType;
+import ru.example.authservice.dto.request.LoginRequest;
 import ru.example.authservice.dto.UserDto;
 import ru.example.authservice.dto.UserRegisteredPayload;
 import ru.example.authservice.dto.request.UserRequestDTO;
@@ -22,51 +22,51 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserService {
 
-          private final UserRepository userRepository;
+    private final UserRepository userRepository;
 
-          private final PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
-          private final OutboxService outboxService;
+    private final OutboxService outboxService;
 
-          private final UserMapper userMapper;
+    private final UserMapper userMapper;
 
-          private final JwtTokenService jwtTokenService;
+    private final JwtTokenService jwtTokenService;
 
-          private final AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
 
-          public AuthResponse login(LoginRequest request) {
-                    Authentication authentication = authenticationManager.authenticate(
-                              new UsernamePasswordAuthenticationToken(
-                                        request.username(),
-                                        request.password()
-                              )
-                    );
+    public AuthResponse login(LoginRequest request) {
+        Authentication authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                request.username(),
+                request.password()
+            )
+        );
 
-                    String jwtToken = jwtTokenService.generateJwtToken(authentication);
+        String jwtToken = jwtTokenService.generateJwtToken(authentication);
 
-                    User user = userRepository.findUserByUsername(request.username())
-                              .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findUserByUsername(request.username())
+            .orElseThrow(() -> new RuntimeException("User not found"));
 
-                    return userMapper.toAuthResponse(jwtToken, user);
+        return userMapper.toAuthResponse(jwtToken, user);
+    }
 
-          }
+    @Transactional
+    public User signUp(UserRequestDTO userRequestDTO) {
+        User user = userMapper.toEntityWithPassword(userRequestDTO, passwordEncoder);
+        User savedUser = userRepository.save(user);
 
-          @Transactional
-          public User signUp(UserRequestDTO userRequestDTO) {
-                    User user = userMapper.toEntityWithPassword(userRequestDTO, passwordEncoder);
-                    User savedUser = userRepository.save(user);
+        UserRegisteredPayload payload = userMapper.toUserRegisteredPayload(savedUser);
+        outboxService.createEvent(EventType.USER_REGISTERED.getEventTypeName(), payload);
 
-                    UserRegisteredPayload payload = userMapper.toUserRegisteredPayload(savedUser);
-                    outboxService.createEvent(EventType.USER_REGISTERED.getEventTypeName(), payload);
+        return savedUser;
+    }
 
-                    return savedUser;
-          }
-
-          public List<UserDto> getAllUsers() {
-                    return Streamable.of(userRepository.findAll()).stream()
-                              .map(userMapper::toUserDto)
-                              .toList();
-          }
+    public List<UserDto> getAllUsers() {
+        return Streamable.of(userRepository.findAll()).stream()
+            .map(userMapper::toUserDto)
+            .toList();
+    }
 }

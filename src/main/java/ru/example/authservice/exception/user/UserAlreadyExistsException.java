@@ -1,7 +1,7 @@
 package ru.example.authservice.exception.user;
 
 
-import static ru.example.authservice.utils.Constants.MESSAGE_USER_EXIST;
+import static ru.example.authservice.util.Constants.MESSAGE_USER_EXIST;
 
 public class UserAlreadyExistsException extends RuntimeException {
 
