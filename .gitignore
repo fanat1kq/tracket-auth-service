@@ -13,6 +13,8 @@ mvnw.cmd
 .env.docker
 .env
 build-and-push.sh
+conf
+docker-compose.yml
 
 ### STS ###
 .apt_generated
