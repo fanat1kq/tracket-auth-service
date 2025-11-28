@@ -15,6 +15,7 @@ import ru.example.authservice.dto.UserDto;
 import ru.example.authservice.dto.UserRegisteredPayload;
 import ru.example.authservice.dto.request.UserRequestDTO;
 import ru.example.authservice.entity.User;
+import ru.example.authservice.exception.user.UserNotFoundException;
 import ru.example.authservice.mapper.UserMapper;
 import ru.example.authservice.repository.UserRepository;
 
@@ -48,7 +49,7 @@ public class UserService {
         String jwtToken = jwtTokenService.generateJwtToken(authentication);
 
         User user = userRepository.findUserByUsername(request.username())
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         return userMapper.toAuthResponse(jwtToken, user);
     }
